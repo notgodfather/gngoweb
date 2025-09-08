@@ -8,9 +8,9 @@ function App() {
   const { currentUser } = useAuth();
   return (
     <Routes>
-      <Route path="/home" element={currentUser? <HomePage/>: <Navigate to="/login"/>}/>
-      <Route path="/login" element={!currentUser ? <LoginPage/> : <Navigate to="/home"/>}/>
-      <Route path='/orders' element={currentUser ? <MyOrders/> : <Navigate to="/login"/>}/>
+      <Route path="/" element={!currentUser? <LoginPage/>: <Navigate to="/home"/>}/>
+      <Route path="/home" element={!currentUser ? <LoginPage/> : <Navigate to="/home"/>}/>
+      <Route path='/orders' element={currentUser ? <MyOrders/> : <Navigate to="/"/>}/>
     </Routes>
   );
 }
