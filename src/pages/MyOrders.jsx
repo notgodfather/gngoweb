@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
-import { db } from '../firebaseConfig';
-import { collection, query, where, orderBy, getDocs } from 'firebase/firestore';
-import { useAuth } from '../context/AuthContext';
+import React, { useEffect, useState } from "react";
+import { db } from "../firebaseConfig";
+import { collection, query, where, orderBy, getDocs } from "firebase/firestore";
+import { useAuth } from "../context/AuthContext";
+import Navbar from "../components/Navbar"; // Make sure you have this!
 
 const MyOrders = () => {
   const { currentUser } = useAuth();
@@ -14,14 +15,14 @@ const MyOrders = () => {
 
     const fetchOrders = async () => {
       const q = query(
-        collection(db, 'orders'),
-        where('userId', '==', currentUser.uid),
-        orderBy('createdAt', 'desc')
+        collection(db, "orders"),
+        where("userId", "==", currentUser.uid),
+        orderBy("createdAt", "desc")
       );
       const querySnapshot = await getDocs(q);
-      const orderList = querySnapshot.docs.map(doc => ({
+      const orderList = querySnapshot.docs.map((doc) => ({
         id: doc.id,
-        ...doc.data()
+        ...doc.data(),
       }));
       setOrders(orderList);
       setLoading(false);
@@ -30,76 +31,84 @@ const MyOrders = () => {
     fetchOrders();
   }, [currentUser]);
 
-  if (loading) return <div>Loading...</div>;
   if (!currentUser) return <div>Please log in to view your orders.</div>;
-  if (orders.length === 0) return <div>No orders found.</div>;
 
   return (
-    <div style={{ maxWidth: 700, margin: '40px auto', padding: 20 }}>
-      <h2 style={{ fontWeight: 'bold', fontSize: 28 }}>Your Order History</h2>
-      {orders.map(order => (
-        <div
-          key={order.id}
-          style={{
-            margin: '25px 0',
-            padding: '20px 24px',
-            background: 'white',
-            borderRadius: 15,
-            boxShadow: '0 2px 10px #e5e7eb',
-          }}
-        >
-          <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 10 }}>
-            Order #{order.orderId?.slice(-8)}
-            <span
-              style={{
-                float: 'right',
-                fontSize: 13,
-                background: getOrderStatusColor(order.status),
-                color: 'white',
-                padding: '2px 14px',
-                borderRadius: 8,
-                marginLeft: 15,
-              }}
-            >
-              {getOrderStatusLabel(order.status)}
-            </span>
-          </div>
-          <div style={{ color: '#666', fontSize: 13, marginBottom: 8 }}>
-            {order.createdAt && order.createdAt.toDate
-              ? order.createdAt.toDate().toLocaleString()
-              : ''}
-          </div>
-          {order.items?.map(item => (
-            <div key={item.id} style={{ display: 'flex', alignItems: 'center', marginBottom: 8, gap: 12 }}>
-              <img src={item.imageUrl || 'https://via.placeholder.com/40'} alt={item.name} style={{ width: 40, height: 40, borderRadius: 8 }} />
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 500 }}>{item.name}</div>
-                <div style={{ color: '#999', fontSize: 12 }}>x{item.quantity}</div>
-              </div>
-              <div style={{ fontWeight: 600 }}>₹{item.price * item.quantity}</div>
+    <div className="orders-bg">
+      <Navbar />
+      <div className="orders-container">
+        <h1 className="orders-title">Your Order History</h1>
+        {loading && (
+          <div className="empty-orders">Loading...</div>
+        )}
+        {!loading && orders.length === 0 && (
+          <div className="empty-orders">No orders found.</div>
+        )}
+        {orders.map((order) => (
+          <div key={order.id} className="order-card-cool">
+            <div className="order-card-header">
+              <span className="order-id">
+                Order #{order.orderId?.slice(-8) || order.id.slice(-8)}
+              </span>
+              <span
+                className="order-status"
+                style={getOrderStatusColorStyle(order.status)}
+              >
+                {getOrderStatusLabel(order.status)}
+              </span>
             </div>
-          ))}
-          <div style={{ marginTop: 12, textAlign: 'right', fontWeight: 700, fontSize: 16 }}>
-            Total: ₹{order.amount}
+            <div className="order-date">
+              {order.createdAt && order.createdAt.toDate
+                ? order.createdAt.toDate().toLocaleString()
+                : ""}
+            </div>
+            {order.items?.map((item, idx) => (
+              <div
+                key={item.id || item.name || idx}
+                className="order-item-row"
+              >
+                <img
+                  src={item.imageUrl || "https://via.placeholder.com/40"}
+                  alt={item.name}
+                  className="order-item-img"
+                />
+                <div>
+                  <div>{item.name}</div>
+                  <div className="order-item-qty">x{item.quantity}</div>
+                </div>
+                <span style={{ marginLeft: "auto", fontWeight: 500 }}>
+                  ₹{item.price * item.quantity}
+                </span>
+              </div>
+            ))}
+            <div className="order-total-line">
+              <span>Total:</span>
+              <span className="order-total-bold">₹{order.amount}</span>
+            </div>
           </div>
-        </div>
-      ))}
+        ))}
+      </div>
     </div>
   );
 };
 
-// Helper to display status with color
 function getOrderStatusLabel(status) {
-  if (status === 'paid') return 'Completed';
-  if (status === 'pending') return 'Pending';
-  if (status === 'ready') return 'Ready for Pickup';
-  return status || 'Pending';
+  if (!status) return "Pending";
+  const s = status.toLowerCase();
+  if (s === "paid" || s === "completed") return "Completed";
+  if (s === "pending") return "Pending";
+  if (s === "ready" || s === "ready for pickup") return "Ready for Pickup";
+  if (s === "preparing") return "Preparing";
+  return status.charAt(0).toUpperCase() + status.slice(1);
 }
-function getOrderStatusColor(status) {
-  if (status === 'paid') return '#22c55e';
-  if (status === 'pending') return '#eab308';
-  if (status === 'ready') return '#3b82f6';
-  return '#eab308';
+function getOrderStatusColorStyle(status) {
+  if (!status) return { background: "#facc15", color: "#6d4c00" };
+  const s = status.toLowerCase();
+  if (s === "paid" || s === "completed") return { background: "#22c55e", color: "#fff" };
+  if (s === "pending") return { background: "#facc15", color: "#6d4c00" };
+  if (s === "ready" || s === "ready for pickup") return { background: "#f59e42", color: "#fff" };
+  if (s === "preparing") return { background: "#3b82f6", color: "#fff" };
+  return { background: "#e5e7eb", color: "#444" };
 }
 
 export default MyOrders;
