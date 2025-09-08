@@ -124,7 +124,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                 <div style={styles.quantityControl}>
                   <button
                     style={styles.quantityControlButton}
-                    onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                    onClick={() => updateQuantity(item.id,- 1)}
                     disabled={item.quantity === 1}
                   >
                     -
@@ -132,7 +132,7 @@ const CartDrawer = ({ isOpen, onClose }) => {
                   <span style={styles.quantityControlSpan}>{item.quantity}</span>
                   <button
                     style={styles.quantityControlButton}
-                    onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                    onClick={() => updateQuantity(item.id,1)}
                   >
                     +
                   </button>
